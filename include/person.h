@@ -21,7 +21,7 @@ class Person {
         }
 
         int getAge() {
-            return this->age_
+            return this->age_;
         }
         void setAge(int age) {
             this->age_ = age;

@@ -15,7 +15,7 @@ MAIN = main
 
 all: $(MAIN)
 
-%.o: %.cc
+%.o: %.cpp
 	$(CC) $(CPPFLAGS) -c $< -o $@ $(INCLUDES)
 
 $(MAIN): $(MOBJ) $(OBJS)
