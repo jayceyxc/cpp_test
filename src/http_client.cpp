@@ -11,6 +11,7 @@ boostHttpclient_c::boostHttpclient_c(boost::asio::io_service& io_service,
     // allow us to treat all data up until the EOF as the content.
     std::ostream request_stream(&request_);
 
+    // postString是要发送给DSP产商的json格式的竞价请求内容
     string postString = "{\"id\":\"ec02aa0c-015d-1000-d176-00837f3700b1}\"";
 
     request_stream << "POST " << path << " HTTP/1.1\r\n";
@@ -130,16 +131,6 @@ void boostHttpclient_c::handle_read_headers(const boost::system::error_code& err
         std::cout << header << "\n";
       std::cout << "\n";
 
-      // Write whatever content we already have to output.
-    //      if (response_.size() > 0){
-    ////    	  std::cout << &response_;
-    //    	  boost::asio::streambuf::const_buffers_type bufs = response_.data();
-    //    	  std::string line(
-    //    	      boost::asio::buffers_begin(bufs),
-    //    	      boost::asio::buffers_begin(bufs) + response_.size());
-    //    	  std::cout << line;
-    //      }
-
       // Start reading remaining data until EOF.
       boost::asio::async_read(socket_, response_,
           boost::asio::transfer_at_least(1),
@@ -156,8 +147,6 @@ void boostHttpclient_c::handle_read_content(const boost::system::error_code& err
 {
     if (!err)
     {
-      // Write all of the data that has been read so far.
-    //      std::cout << &response_;
       boost::asio::streambuf::const_buffers_type bufs = response_.data();
       std::string line(
           boost::asio::buffers_begin(bufs),
@@ -165,7 +154,8 @@ void boostHttpclient_c::handle_read_content(const boost::system::error_code& err
 
       if(line.find("\r\n\r\n")!=string::npos){
         std::cout << line;
-        regex expression("^[\{](.*)[\}]$");
+        // 匹配这样的字符串, 用花括号括起来的内容: {hello}
+        regex expression("^[{](.*)[}]$");
         cmatch what;
         if(regex_search(line.c_str(),what,expression)){
             //regex_match ： 是对整个输入块的匹配，整个块如不匹配则不能成功
@@ -176,29 +166,6 @@ void boostHttpclient_c::handle_read_content(const boost::system::error_code& err
         else{
             cout<<"Error Match"<<endl;
         }
-
-    //  		zoomInfo_t zoomInfo ; PointInfo_t tmpPointInfo ; int sceneWidth ,sceneHeight,WatchZoneID ;
-    //  		list<PointInfo_t> *tmpZoom = &zoomInfo.zoomPonitArray ;
-    //  		cJSON *root = cJSON_Parse(what[0].str().c_str());
-    //  		if(root==NULL){
-    //  			return ;
-    //  		}
-    //
-    //  		cJSON *tmp = cJSON_GetObjectItem(root,"sceneWidth") ;
-    //  		if(tmp!=NULL){
-    //  			sceneWidth 	= 	tmp->valueint ;
-    //  			printf("width:%d \n",sceneWidth);
-    //  		}else{
-    //  			return  ;
-    //  		}
-    //  		tmp = cJSON_GetObjectItem(root,"sceneHeight");
-    //  		if(tmp!=NULL){
-    //  			sceneHeight = 	tmp->valueint ;
-    //  			printf("height:%d \n",sceneHeight);
-    //  		}else{
-    //
-    //  		}
-
       }
 
       // Continue reading remaining data until EOF.
@@ -214,14 +181,12 @@ void boostHttpclient_c::handle_read_content(const boost::system::error_code& err
 }
 
 
-/*
 int main(int argc, char* argv[])
 {
   try
   {
     boost::asio::io_service io_service;
-    boostHttpclient_c c(io_service, "192.168.1.46:8187", "/handle_post_request");
-//    client c(io_service, "192.168.1.46:8187", "/");
+    boostHttpclient_c c(io_service, "112.124.33.66:9988", "/inmobibid");
     io_service.run();
   }
   catch (std::exception& e)
@@ -231,4 +196,3 @@ int main(int argc, char* argv[])
 
   return 0;
 }
-*/

@@ -2,14 +2,14 @@ SHELL = /bin/sh
 CC = g++
 RM = rm
 
-INCLUDES = -I./include -I./src -I/usr/local/include/boost
-LIB_PATH =
-LDFLAGS = -lboost_system-mt -lboost_filesystem-mt -lboost_regex-mt
+INCLUDES = -I./include -I./src -I./include/botan -I/usr/local/include/boost
+LIB_PATH = -Wl,-static -L./lib
+LDFLAGS = -Wl,-static -lbotan -Wl,-static -lboost_system-mt -Wl,-static -lboost_filesystem-mt -Wl,-static -lboost_regex-mt
 
-CPPFLAGS = -g -Wall -pedantic --std=c++0x
+CPPFLAGS = -g -Wall --std=c++0x
 
 MOBJ = src/main.o
-OBJS = src/person.o src/http_client.o
+OBJS = src/person.o src/http_client.o src/push_id_kit.o
 
 MAIN = main
 
