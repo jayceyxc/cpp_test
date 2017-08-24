@@ -35,3 +35,5 @@
 cpp_test.config
 cpp_test.files
 cpp_test.includes
+cpp_test.creator.user
+cpp_test.creator
