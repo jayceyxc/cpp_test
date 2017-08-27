@@ -1,4 +1,4 @@
-#include<http_client.h>
+#include "http_client.h"
 
 
 boostHttpclient_c::boostHttpclient_c(boost::asio::io_service& io_service,
@@ -180,7 +180,7 @@ void boostHttpclient_c::handle_read_content(const boost::system::error_code& err
     }
 }
 
-
+/*
 int main(int argc, char* argv[])
 {
   try
@@ -196,3 +196,4 @@ int main(int argc, char* argv[])
 
   return 0;
 }
+*/
