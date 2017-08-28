@@ -1,4 +1,5 @@
 #include "http_client.h"
+#include "log.h"
 
 
 boostHttpclient_c::boostHttpclient_c(boost::asio::io_service& io_service,
@@ -26,7 +27,7 @@ boostHttpclient_c::boostHttpclient_c(boost::asio::io_service& io_service,
 
     // Start an asynchronous resolve to translate the server and service names
     // into a list of endpoints.
-    tcp::resolver::query query("112.124.33.66", "9988");
+    tcp::resolver::query query("112.124.65.153", "9988");
     resolver_.async_resolve(query,
         boost::bind(&boostHttpclient_c::handle_resolve, this,
           boost::asio::placeholders::error,
@@ -47,6 +48,7 @@ void boostHttpclient_c::handle_resolve(const boost::system::error_code& err,
     else
     {
       std::cout << "Error: " << err.message() << "\n";
+      log_err(err.message());
     }
 }
 
@@ -62,6 +64,7 @@ void boostHttpclient_c::handle_connect(const boost::system::error_code& err)
     else
     {
       std::cout << "Error: " << err.message() << "\n";
+      log_err(err.message());
     }
 }
 
@@ -81,6 +84,7 @@ void boostHttpclient_c::handle_write_request(const boost::system::error_code& er
     else
     {
       std::cout << "Error: " << err.message() << "\n";
+      log_err(err.message());
     }
 }
 
@@ -99,6 +103,7 @@ void boostHttpclient_c::handle_read_status_line(const boost::system::error_code&
       if (!response_stream || http_version.substr(0, 5) != "HTTP/")
       {
         std::cout << "Invalid response\n";
+        log_err("Invalid response\n");
         return;
       }
       if (status_code != 200)
@@ -117,6 +122,7 @@ void boostHttpclient_c::handle_read_status_line(const boost::system::error_code&
     else
     {
       std::cout << "Error: " << err << "\n";
+      log_err(err.message());
     }
 }
 
@@ -140,6 +146,7 @@ void boostHttpclient_c::handle_read_headers(const boost::system::error_code& err
     else
     {
       std::cout << "Error: " << err << "\n";
+      log_err(err.message());
     }
 }
 
@@ -177,6 +184,7 @@ void boostHttpclient_c::handle_read_content(const boost::system::error_code& err
     else if (err != boost::asio::error::eof)
     {
       std::cout << "Error: " << err << "\n";
+      log_err(err.message());
     }
 }
 

@@ -7,6 +7,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
+    /*
     Person* person = new Person(18, "hello");
     cout << person->display();
 
@@ -23,6 +24,7 @@ int main(int argc, char* argv[]) {
     else{
         cout<<"Error Match"<<endl;
     }
+    */
 
     try
     {
@@ -35,7 +37,7 @@ int main(int argc, char* argv[]) {
               string line_content = "";
               getline(ifs, line_content);
               cout << line_content << endl;
-              boostHttpclient_c c(io_service, "112.124.33.66:9988", "/inmobibid", line_content);
+              boostHttpclient_c c(io_service, "112.124.65.153:9988", "/inmobibid", line_content);
           }
           ifs.close();
       }
