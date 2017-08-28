@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 #include "person.h"
 #include "http_client.h"
@@ -27,7 +28,18 @@ int main(int argc, char* argv[]) {
     {
       boost::asio::io_service io_service;
 //    boostHttpclient_c c(io_service, "192.168.1.46:8187", "/handle_post_request");
-      boostHttpclient_c c(io_service, "112.124.33.66:9988", "/inmobibid");
+      std::ifstream ifs;
+      ifs.open("data/requests.txt", std::ifstream::in);
+      if(ifs.is_open()) {
+          while (ifs.good() && !ifs.eof()) {
+              string line_content = "";
+              getline(ifs, line_content);
+              cout << line_content << endl;
+              boostHttpclient_c c(io_service, "112.124.33.66:9988", "/inmobibid", line_content);
+          }
+          ifs.close();
+      }
+//      boostHttpclient_c c(io_service, "112.124.33.66:9988", "/inmobibid");
 //    client c(io_service, "192.168.1.46:8187", "/");
       io_service.run();
     }

@@ -2,7 +2,7 @@
 
 
 boostHttpclient_c::boostHttpclient_c(boost::asio::io_service& io_service,
-      const std::string& server, const std::string& path)
+      const std::string& server, const std::string& path, const std::string &post_content)
     : resolver_(io_service),
       socket_(io_service)
 {
@@ -12,16 +12,16 @@ boostHttpclient_c::boostHttpclient_c(boost::asio::io_service& io_service,
     std::ostream request_stream(&request_);
 
     // postString是要发送给DSP产商的json格式的竞价请求内容
-    string postString = "{\"id\":\"ec02aa0c-015d-1000-d176-00837f3700b1}\"";
+    // string postString = "{\"id\":\"ec02aa0c-015d-1000-d176-00837f3700b1}\"";
 
     request_stream << "POST " << path << " HTTP/1.1\r\n";
     request_stream << "Host: " << server << "\r\n";
     request_stream << "Accept: */*\r\n";
 
-    request_stream << "Content-Type: " << "application/x-www-form-urlencoded" << "\r\n";
-    request_stream << "Content-Length: " << postString.length() << "\r\n";
+    request_stream << "Content-Type: " << "Content-type: application/json" << "\r\n";
+    request_stream << "Content-Length: " << post_content.length() << "\r\n";
     request_stream << "Connection: keep-alive\r\n\r\n";
-    request_stream << postString ;
+    request_stream << post_content ;
 
 
     // Start an asynchronous resolve to translate the server and service names

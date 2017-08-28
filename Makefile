@@ -4,7 +4,7 @@ RM = rm
 
 INCLUDES = -I./include -I./src -I/usr/local/include/boost
 LIB_PATH = -L/usr/local/lib
-LDFLAGS = -lboost_system-mt -lboost_filesystem-mt -lboost_regex-mt
+LDFLAGS = -lboost_system -lboost_filesystem -lboost_regex
 
 CPPFLAGS = -g -Wall --std=c++0x
 

@@ -21,7 +21,7 @@ class boostHttpclient_c
 {
 public:
     boostHttpclient_c(boost::asio::io_service& io_service,
-      const std::string& server, const std::string& path);
+      const std::string& server, const std::string& path, const std::string &post_content);
 
 private:
   void handle_resolve(const boost::system::error_code& err,
