@@ -28,10 +28,23 @@ boostHttpclient_c::boostHttpclient_c(boost::asio::io_service& io_service,
     // Start an asynchronous resolve to translate the server and service names
     // into a list of endpoints.
     tcp::resolver::query query("112.124.65.153", "9988");
+//    tcp::resolver::query query("www.baidu.com", "http");
+    tcp::resolver::iterator iter = resolver_.resolve(query);
+    /*
+    tcp::resolver::iterator end;
+    while (iter != end) {
+        tcp::endpoint endpoint = *iter++;
+        cout << endpoint << endl;
+    }
+    */
+    boost::asio::async_connect(socket_, iter, boost::bind(&boostHttpclient_c::handle_connect, this,
+                                                         boost::asio::placeholders::error));
+    /*
     resolver_.async_resolve(query,
         boost::bind(&boostHttpclient_c::handle_resolve, this,
           boost::asio::placeholders::error,
           boost::asio::placeholders::iterator));
+    */
 }
 
 void boostHttpclient_c::handle_resolve(const boost::system::error_code& err,
@@ -47,7 +60,6 @@ void boostHttpclient_c::handle_resolve(const boost::system::error_code& err,
     }
     else
     {
-      std::cout << "Error: " << err.message() << "\n";
       log_err(err.message());
     }
 }
@@ -63,7 +75,6 @@ void boostHttpclient_c::handle_connect(const boost::system::error_code& err)
     }
     else
     {
-      std::cout << "Error: " << err.message() << "\n";
       log_err(err.message());
     }
 }
@@ -76,14 +87,13 @@ void boostHttpclient_c::handle_write_request(const boost::system::error_code& er
       // Read the response status line. The response_ streambuf will
       // automatically grow to accommodate the entire line. The growth may be
       // limited by passing a maximum size to the streambuf constructor.
-      printf("http write OK start listen \n ");
+      log_info("http write OK start listen \n ");
       boost::asio::async_read_until(socket_, response_, "\r\n",
           boost::bind(&boostHttpclient_c::handle_read_status_line, this,
             boost::asio::placeholders::error));
     }
     else
     {
-      std::cout << "Error: " << err.message() << "\n";
       log_err(err.message());
     }
 }
@@ -102,18 +112,17 @@ void boostHttpclient_c::handle_read_status_line(const boost::system::error_code&
       std::getline(response_stream, status_message);
       if (!response_stream || http_version.substr(0, 5) != "HTTP/")
       {
-        std::cout << "Invalid response\n";
         log_err("Invalid response\n");
         return;
       }
       if (status_code != 200)
       {
-        std::cout << "Response returned with status code ";
+        log_err("Response returned with status code");
         std::cout << status_code << "\n";
         return;
       }
 
-      printf("response headers get OK \n ");
+      log_info("response headers get OK \n ");
       // Read the response headers, which are terminated by a blank line.
       boost::asio::async_read_until(socket_, response_, "\r\n\r\n",
           boost::bind(&boostHttpclient_c::handle_read_headers, this,
@@ -121,7 +130,6 @@ void boostHttpclient_c::handle_read_status_line(const boost::system::error_code&
     }
     else
     {
-      std::cout << "Error: " << err << "\n";
       log_err(err.message());
     }
 }
@@ -134,7 +142,7 @@ void boostHttpclient_c::handle_read_headers(const boost::system::error_code& err
       std::istream response_stream(&response_);
       std::string header;
       while (std::getline(response_stream, header) && header != "\r")
-        std::cout << header << "\n";
+          log_info(header);
       std::cout << "\n";
 
       // Start reading remaining data until EOF.
@@ -146,7 +154,6 @@ void boostHttpclient_c::handle_read_headers(const boost::system::error_code& err
     else
     {
       std::cout << "Error: " << err << "\n";
-      log_err(err.message());
     }
 }
 
@@ -168,7 +175,7 @@ void boostHttpclient_c::handle_read_content(const boost::system::error_code& err
             //regex_match ： 是对整个输入块的匹配，整个块如不匹配则不能成功
             for(unsigned int i=0;i<what.size();i++)
                 cout<<"str match is :"<<what[i].str()<<endl;
-            printf("\n----\n");
+            cout << "\n----\n";
         }
         else{
             cout<<"Error Match"<<endl;
@@ -183,7 +190,6 @@ void boostHttpclient_c::handle_read_content(const boost::system::error_code& err
     }
     else if (err != boost::asio::error::eof)
     {
-      std::cout << "Error: " << err << "\n";
       log_err(err.message());
     }
 }
@@ -205,3 +211,4 @@ int main(int argc, char* argv[])
   return 0;
 }
 */
+
