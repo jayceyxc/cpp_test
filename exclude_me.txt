@@ -1,0 +1,8 @@
+sync_dev2.sh
+.DS_Store
+.git
+.vscode
+.gitignore
+*.o
+exclude_me.txt
+main
