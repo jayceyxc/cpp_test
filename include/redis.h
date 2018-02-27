@@ -5,9 +5,9 @@
 #include <vector>
 #include <map>
 #include <pthread.h>
+#include <cstdio>
 
 #include "hiredis.h"
-
 
 using namespace std;
 

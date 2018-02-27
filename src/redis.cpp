@@ -4,8 +4,7 @@
 #include <pthread.h>
 #include <string.h>
 
-#include "log.h"
-#include "dpc_redis.h"
+#include "redis.h"
 
 using namespace std;
 
@@ -44,7 +43,7 @@ int Redis::connect()
         ++connCount;
         sleep(connCount);
         if (Redis::connCount > 10) {
-            ERROR("Connection redis (%s:%d %d) failed 10 times and exit!",_ip.c_str(),_port,_db);
+            printf("Connection redis (%s:%d %d) failed 10 times and exit!",_ip.c_str(),_port,_db);
             exit(-1);
         }   
         if(_conn != NULL) {
@@ -55,7 +54,7 @@ int Redis::connect()
         if (_conn == NULL)
             return -1;
         if(_conn->err != 0) {
-            ERROR("Redis %s:%d %d  has err: %s",_ip.c_str(),_port,_db,_conn->errstr);
+            printf("Redis %s:%d %d  has err: %s",_ip.c_str(),_port,_db,_conn->errstr);
             free();
             return -1;
         }
@@ -379,7 +378,7 @@ int Redis::_checkReply(redisReply *reply)
     if (reply == NULL) {
         //判断是否链接出现err
         if (_conn->err != 0) {
-            ERROR("Redis %s:%d %d  has err: %s",_ip.c_str(),_port,_db,_conn->errstr);
+            printf("Redis %s:%d %d  has err: %s",_ip.c_str(),_port,_db,_conn->errstr);
             return connect();
         }
         return -1;
