@@ -86,11 +86,34 @@ int store_msg_redis(std::string host, int port, int db, const char* ip, std::str
     }
     acn_user_info_t user_info;
     memset(&user_info, 0, sizeof(acn_user_info_t));
+#ifdef YINNI
     user_info.flag = USER_ONLINE;
     user_info.lac = 0;
     user_info.ci = 0;
+    user_info.type = 4;
     user_info.ip = addr.s_addr;
     snprintf(user_info.name , sizeof(user_info.name) ,"%s" ,adsl.c_str()) ;
+    snprintf(user_info.address, sizeof(user_info.address), "%s", "5020-7083");
+    snprintf(user_info.imei, sizeof(user_info.imei), "%s", "imei123456");
+    snprintf(user_info.imsi, sizeof(user_info.imsi), "%s", "imsi654321");
+#elifdef WIRELESS
+    user_info.flag = USER_ONLINE;
+    user_info.lac = 0;
+    user_info.ci = 0;
+    user_info.type = 4;
+    user_info.ip = addr.s_addr;
+    snprintf(user_info.name , sizeof(user_info.name) ,"%s" ,adsl.c_str()) ;
+    snprintf(user_info.address, sizeof(user_info.address), "%s", "5020-7083");
+    snprintf(user_info.imei, sizeof(user_info.imei), "%s", "imei123456");
+    snprintf(user_info.imsi, sizeof(user_info.imsi), "%s", "imsi654321");
+#else
+    user_info.flag = USER_ONLINE;
+    user_info.lac = 0;
+    user_info.ci = 0;
+    user_info.type = 4;
+    user_info.ip = addr.s_addr;
+    snprintf(user_info.name , sizeof(user_info.name) ,"%s" ,adsl.c_str()) ;
+    snprintf(user_info.imsi, sizeof(user_info.imsi), "%s", "imsi654321");
 
     struct timeval timeout = {1, 5};
     try {

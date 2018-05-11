@@ -1,8 +1,7 @@
 #include <cmath>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
-#include "dpc_log.hpp"
-#include "tbad_redirect.hpp"
+#include <boost/format.hpp>
 #include "wumanber.hpp"
 
 /**
@@ -35,7 +34,7 @@ bool WuManber::Init(const std::vector<std::string>& patterns)
 
     //check if no pattern specified
     if (patternSize == 0) {
-        WARN("Error: wumanber init failed because no pattern specified.");
+        cout << "Error: wumanber init failed because no pattern specified." << endl;
         return false;
     }
 
@@ -46,7 +45,7 @@ bool WuManber::Init(const std::vector<std::string>& patterns)
         lenPattern = patterns[i].length();
         if (lenPattern < mMin) {
             mMin = lenPattern;
-            WARN("mBlock=%d mMin=%d pat=%s i=%d", mBlock, mMin, patterns[i].c_str(), i);    
+            cout << format("mBlock=%d mMin=%d pat=%s i=%d" % mBlock % mMin % patterns[i].c_str() % i);    
         }
     }
     WARN("mBlock=%d mMin=%d num patterns=%d", mBlock, mMin, patternSize);
@@ -287,88 +286,6 @@ bool WuManber::Init(const std::vector<std::string>& whitelist,
     return _init(patts_vec);
 }
 
-bool WuManber::Init(const std::vector<std::string>& whitelist, const std::vector<std::string>& blacklist,
-                    RawPattAdSetMap &adp_redir_map,  
-                    RawPattAdSetMap &se_redir_map,
-                    RawPattAdSetMap &tbad_redir_map)
-{
-    for (auto it = whitelist.begin(); it != whitelist.end(); it++) {
-        pattadsetmap[Pattern(*it)].insert(white_virt_ad);
-    }
-    for (auto it = blacklist.begin(); it != blacklist.end(); it++) {
-        pattadsetmap[Pattern(*it) ].insert(black_virt_ad);
-    }
-
-    dupGeneralPattern(adp_redir_map);
-    dupGeneralPattern(se_redir_map);
-    dupGeneralPattern(tbad_redir_map);
-
-    for (auto it = adp_redir_map.begin(); it != adp_redir_map.end(); it++) {
-        Pattern patt(it->first);
-        const std::set<unsigned> & raw_ads = it->second;
-        for (auto itad = raw_ads.begin(); itad != raw_ads.end(); itad++) {
-            pattadsetmap[patt].insert(AdCard(*itad, SrcAdpRedirect));
-        }
-    }
-    for (auto it = se_redir_map.begin(); it != se_redir_map.end(); it++) {
-        Pattern patt(it->first);
-        const std::set<unsigned> & raw_ads = it->second;
-        for (auto itad = raw_ads.begin(); itad != raw_ads.end(); itad++) {
-            pattadsetmap[patt].insert(AdCard(*itad, SrcSERedirect));
-        }
-    }
-
-    for (auto it = tbad_redir_map.begin(); it != tbad_redir_map.end(); it++) {
-        Pattern patt(it->first);
-        const std::set<unsigned> & raw_ads = it->second;
-        for (auto itad = raw_ads.begin(); itad != raw_ads.end(); itad++) {
-            pattadsetmap[patt].insert(AdCard(*itad, SrcTaobaoShop));
-        }
-    }
-
-    std::set<std::string> patts;
-    for (auto it = pattadsetmap.begin(); it != pattadsetmap.end(); it++) {
-        patts.insert(it->first.pattern_str);
-    }
-    std::vector<std::string> patts_vec(patts.begin(), patts.end());
-    int rc = _init(patts_vec);
-    if(rc) {
-        AdPatternSet tmp;
-        mAdPtnSet.swap(tmp);
-        buildAdPatternSet(adp_redir_map, mAdPtnSet, mPtnIdMap);
-        buildAdPatternSet(se_redir_map, mAdPtnSet, mPtnIdMap);
-        buildAdPatternSet(tbad_redir_map, mAdPtnSet, mPtnIdMap);
-    }
-    return rc;
-}
-
-bool WuManber::Init(RawPattAdSetMap &adp_redir_map, const AdCard &adcard)
-{
-    dupGeneralPattern(adp_redir_map);
-
-    for (auto it = adp_redir_map.begin(); it != adp_redir_map.end(); it++) {
-        Pattern patt(it->first);
-        const std::set<unsigned> & raw_ads = it->second;
-        for (auto itad = raw_ads.begin(); itad != raw_ads.end(); itad++) {
-            DEBUG("WuManber::Init pattern=%s ad_id=%d", it->first.c_str(), *itad);
-            pattadsetmap[patt].insert(AdCard(*itad, adcard.ad_src));
-        }
-    }
-
-    std::set<std::string> patts;
-    for (auto it = pattadsetmap.begin(); it != pattadsetmap.end(); it++) {
-        patts.insert(it->first.pattern_str);
-    }
-    std::vector<std::string> patts_vec(patts.begin(), patts.end());
-    int rc = _init(patts_vec);
-    if(rc) {
-        AdPatternSet tmp;
-        mAdPtnSet.swap(tmp);
-        buildAdPatternSet(adp_redir_map, mAdPtnSet, mPtnIdMap);
-    }
-    return rc;
-}
-
 /**
  * @brief search multiple pattern in text at one time
  */
@@ -486,114 +403,6 @@ void WuManber::_convert(const int textLength, const ResultPattPosMap& pattposmap
     }
 }
 
-int WuManber::search(const char* text, const int textLength, PatternAdSetMap& res, int endPos)
-{
-    ResultPattPosMap pattposmap;
-    int n = _search(text, textLength, pattposmap);
-
-    std::vector<Pattern> candidates;
-    _convert(textLength, pattposmap, candidates, endPos);
-    for (auto it = candidates.begin(); it != candidates.end(); it++) {
-        PatternAdSetMap::iterator itptr = pattadsetmap.find(*it);
-        if (itptr != pattadsetmap.end()) {
-            res[*it] = itptr->second;
-        }
-    }
-    return n;
-}
-
-int WuManber::search(const std::string& str, PatternAdSetMap& res, int endPos)
-{
-    return search(str.c_str(), str.length(), res, endPos);
-}
-
-int WuManber::search(const char* text, const int textLength, AdCardSet& res, int endPos)
-{
-    DEBUG("wumanber search start fro js push decision");
-    ResultPattPosMap pattposmap;
-    int n = _search(text, textLength, pattposmap);
-
-#ifdef ENABLE_DEBUG
-    for (auto it = pattposmap.begin(); it != pattposmap.end(); it++){
-        DEBUG("wumanber result show keys:%s, pos:%d", it->first.c_str(), it->second);
-    }
-#endif
-
-    // 匹配后规则整理
-    bool patthMatch = false;
-    for (auto it = pattposmap.begin(); it != pattposmap.end();) {
-        for (auto itt = pattposmap.begin(); itt != pattposmap.end(); itt++) {
-            if (it->first.size() < itt->first.size() && itt->first.find(it->first) != string::npos) {
-                pattposmap.erase(it++);
-                patthMatch = true;
-                break;
-            }
-        }
-        if (!patthMatch) {
-            it ++;
-        }
-        patthMatch = false;
-    }
-
-
-    std::vector<Pattern> candidates;
-    // 如果产生多个匹配的规则组合与原串相同则过滤如game.com 
-    // match game. and .com
-    std::string src_text(text, textLength);
-    std::map<int, std::string> indexMap;
-    if ( pattposmap.size() > 1) { // 结果集去重复
-        for (auto it = pattposmap.begin(); it != pattposmap.end(); it++) {
-            int pos = src_text.find(it->first);
-            indexMap[pos] = it->first;
-        }
-        int mpos = -1;
-        std::string mrule;
-        bool nomatch = false;
-        for (auto it = indexMap.begin(); it != indexMap.end(); it++){
-            if (mpos != -1) { // FIXME pattern /
-                if (mpos + mrule.size() >= it->first ) {
-                    nomatch = true ;
-                    DEBUG("search except match:%s rule:%s", src_text.c_str(), (mrule +"*"+ it->second).c_str());
-                }
-            }
-            mpos = it->first;
-            mrule = it->second;
-        }
-        if ( nomatch ) {
-            return 0;
-        }
-    }
-
-    _convert(textLength, pattposmap, candidates, endPos);
-
-    int pattMatchNum = 0;
-    for (auto it = candidates.begin(); it != candidates.end(); it++) {
-        PatternAdSetMap::iterator itptr = pattadsetmap.find(*it);
-        DEBUG("candidiate pat=%s match_type=%d adset size=%ld", (*it).pattern_str.c_str(), (*it).match_type, pattadsetmap.size());
-        if (itptr != pattadsetmap.end()) {
-            AdCardSet& curr_adset = itptr->second;
-            DEBUG("pat=%s adset size=%ld", (*it).pattern_str.c_str(), curr_adset.size() );
-            pattMatchNum ++;
-            res.insert(curr_adset.begin(), curr_adset.end());
-        }
-    }
-    DEBUG("pattMatchNum:%d res ad size:%d  patt size:%d", pattMatchNum, res.size(), pattposmap.size());
-
-    if((res.size() > 0 && pattMatchNum >= pattposmap.size()) || (res.size()> 0 && pattMatchNum == 0)) {
-        int did_filter=0;
-        filterAdByPatternset(candidates, res, did_filter);
-    } else {
-        res.clear();
-        return 0;
-    }
-    return n;
-}
-
-int WuManber::search(const std::string& str, AdCardSet& res, int endPos)
-{
-    return search(str.c_str(), str.length(), res, endPos);
-}
-
 /**
  * the core search member func for internal use
  */
@@ -665,57 +474,6 @@ int WuManber::search(const std::string& str)
     return search(str.c_str(), str.length());
 }
 
-int WuManber::dupGeneralPattern(RawPattAdSetMap &redir_map)
-{
-    DEBUG("dupGeneralPattern start: RawPattAdSetMap size=%ld", redir_map.size());
-    int rc=0;
-    RawPattAdSetMap tmp_map;
-    for (auto it = redir_map.begin(); it != redir_map.end(); it++) {
-        Pattern tmp(it->first);
-        vector<string> strs;
-        boost::split(strs, tmp.pattern_str, boost::is_any_of("*"));
-        if(strs.size()<=1) {
-            continue;
-        }
-        DEBUG("pattern=%s", it->first.c_str());
-        const std::set<unsigned> & raw_ads = it->second;
-        for (unsigned int j = 0; j < strs.size(); j++) {
-            if(strs[j].size()==0) {continue;}
-            std::string stmp;
-            if(j==0) {
-                if(tmp.match_type==PrefixAsterisk || tmp.match_type==KeywordMode) {
-                    stmp="*" + strs[j] + "*";
-                } else {
-                    stmp=strs[j] + "*";
-                }
-            } else if(j==strs.size()-1) {
-                if(tmp.match_type == SuffixAsterisk || tmp.match_type == KeywordMode) {
-                    stmp="*" + strs[j] + "*";
-                } else {
-                    stmp="*" + strs[j];
-                }
-            } else {
-                stmp="*" + strs[j] + "*";
-            }
-            for (auto itad = raw_ads.begin(); itad != raw_ads.end(); itad++) {
-                DEBUG("dupGeneralPattern() tmp: j=%d str=%s adid=%d", j, stmp.c_str(), *itad);
-                tmp_map[stmp].insert(*itad);
-            }
-        }
-    }
-    if(tmp_map.size()) {
-        for (auto it = tmp_map.begin(); it != tmp_map.end(); it++) {
-            const std::set<unsigned> & raw_ads = it->second;
-            for (auto itad = raw_ads.begin(); itad != raw_ads.end(); itad++) {
-                DEBUG("dupGeneralPattern() insert: str=%s adid=%d", it->first.c_str(), *itad);
-                redir_map[it->first].insert(*itad);
-            }
-        }
-    }
-    DEBUG("dupGeneralPattern end: RawPattAdSetMap size=%ld", redir_map.size());
-    return rc;
-}
-
 int WuManber::buildPatternIDPamp(const std::vector<std::string>& patterns, PatternIDMap& ptnid)
 {
     PatternIDMap tmp;
@@ -741,52 +499,6 @@ int WuManber::buildPatternIDPamp(const std::vector<std::string>& patterns, Patte
     }
     DEBUG("buildPatternIDPamp, end: pattern size=%ld ptn id size=%ld id=%d", patterns.size(), ptnid.size(), id);
     return 0;
-}
-
-int WuManber::buildAdPatternSet(const RawPattAdSetMap &redir_map, AdPatternSet& aps, const PatternIDMap& ptnid)
-{
-    DEBUG("buildAdPatternSet: start: RawPattAdSetMap size=%ld pat set size=%ld ptnid size=%ld", redir_map.size(), aps.size(), ptnid.size() );
-    int rc=0;
-    for (auto rit = redir_map.begin(); rit != redir_map.end(); rit++) {
-        const std::string& ptn = rit->first;
-        const std::set<unsigned> & raw_ads = rit->second;
-        unsigned int i;
-        Pattern tmp(ptn); /* strip both prefix and suffix */
-        vector<string> strs;
-        boost::split(strs, tmp.pattern_str, boost::is_any_of("*"));
-        if(strs.size()<=1) {continue;}
-        for (auto itad = raw_ads.begin(); itad != raw_ads.end(); itad++) {
-            DEBUG("buildAdPatternSet(), ptn=%s adid=%d", ptn.c_str(), *itad);
-        }
-        for (i = 0; i < strs.size(); i++) {
-            DEBUG("i=%d split=%s pattern=%s", i, strs[i].c_str(), tmp.pattern_str.c_str());
-        }
-        DEBUG("buildAdPatternSet(), nstr=%ld", strs.size());
-
-        std::vector<PatternID> vtmp;
-        unsigned int max_ptn_id=0;
-        for (i = 0; i < strs.size(); i++) {
-            auto it=ptnid.find(strs[i]);
-            if(it==ptnid.end()) { /* something is wrong, ignore this pattern */
-                DEBUG("pattern=%s not found in PatternIDMap", strs[i].c_str());
-                break;
-            }
-            DEBUG("pattern=%s id=%d", strs[i].c_str(), it->second);
-            vtmp.push_back(it->second);  /* collect pattern id */
-            if(max_ptn_id < it->second) {max_ptn_id = it->second;}            
-        }
-        if(i != strs.size()) {
-            DEBUG("pattern=%s skipped", tmp.pattern_str.c_str());
-            continue;
-        }
-        for (auto itad = raw_ads.begin(); itad != raw_ads.end(); itad++) {
-            unsigned adid = *itad;
-            DEBUG("adid=%d", adid);            
-            aps[adid].insert(std::make_pair(max_ptn_id, vtmp));  /* add a new one, if not found */
-        }
-    }
-    DEBUG("buildAdPatternSet: end: RawPattAdSetMap size=%ld pat set size=%ld ptnid size=%ld", redir_map.size(), aps.size(), ptnid.size() );
-    return rc;
 }
 
 /* check if any set is in a list of candidate ads (cid) */
@@ -841,110 +553,6 @@ struct PatternPredicate
         }
 };
 
-/* if out=1, found match=> keep adid, otherwise, should skip adid */
-int WuManber::filterAdByPatternset(std::vector<Pattern>& candidates_ptn,
-                                   AdCardSet& candidates_ad,
-                                   int& did_filter)
-{
-    AdPatternSet& aps = mAdPtnSet;
-    PatternIDMap& ptnid = mPtnIdMap;
-    int rc=0;
-    unsigned int i;
-    std::vector<PatternID> cid;    /*get pattern id*/
-    int found=0;
-    for(auto it=candidates_ad.begin(); it!=candidates_ad.end(); ++it) {
-        const AdCard& adid = *it;
-        auto ait=aps.find(adid.ad_id);
-        if(ait!=aps.end()) {
-            DEBUG("filterAdByPatternset() adid=%d: do filter", adid.ad_id);
-            found=1; break;
-        }
-        DEBUG("filterAdByPatternset() adid=%d: no filter", adid.ad_id);
-    }
-    if(!found) {
-        did_filter=0; 
-        return rc;
-    }
-    DEBUG("filterAdByPatternset() found=%d", found);
-    for(i=0; i<candidates_ptn.size(); i++) {
-        DEBUG("candidates_ptn: before sort pattern=%s match_type=%d pos=%d", 
-              candidates_ptn[i].pattern_str.c_str(), 
-              candidates_ptn[i].match_type, 
-              candidates_ptn[i].mPosition);
-    }
-    PatternPredicate comp_ptn;
-    std::sort(candidates_ptn.begin(), candidates_ptn.end(), comp_ptn);
-    for(i=0; i<candidates_ptn.size(); i++) {
-        DEBUG("candidates_ptn: after sort pattern=%s match_type=%d pos=%d", 
-              candidates_ptn[i].pattern_str.c_str(), 
-              candidates_ptn[i].match_type, 
-              candidates_ptn[i].mPosition);
-    }
-
-    AdCardSet output_ad;
-    did_filter=0;
-    unsigned int max_ptn_id=0;
-    for(i=0; i<candidates_ptn.size(); i++) {
-        auto it=ptnid.find(candidates_ptn[i].pattern_str);
-        if(it==ptnid.end()) {
-            DEBUG("pattern=%s not found in PatternIDMap", candidates_ptn[i].pattern_str.c_str());
-            return rc;
-        }
-        if(!cid.empty() && (it->second == cid[cid.size()-1])) {continue;}
-        DEBUG("pattern=%s id=%d", candidates_ptn[i].pattern_str.c_str(), it->second);
-        cid.push_back(it->second);  /* collect pattern id */
-        if(max_ptn_id < it->second) {max_ptn_id = it->second;}
-    }
-
-    for(auto it=candidates_ad.begin(); it!=candidates_ad.end(); ++it) {
-        const AdCard& adid = *it;
-        DEBUG("filterAdByPatternset() adid=%d", adid.ad_id);
-        auto ait=aps.find(adid.ad_id);
-        if(ait==aps.end()) {
-            DEBUG("no found in AdPatternSet() keep adid=%d", adid.ad_id);
-            output_ad.insert(adid);
-            continue;
-        }
-        int match_index=-1;
-        rc=matchPatternSet(cid, max_ptn_id, ait->second, match_index);
-        DEBUG("filterAdByPatternset() match_index=%d", match_index);
-        if(match_index ==-1) {
-            did_filter=1;
-            DEBUG("filterAdByPatternset() did_filter=%d adid=%d", did_filter, adid.ad_id);
-            continue;
-        }
-        DEBUG("filterAdByPatternset() keep adid=%d", adid.ad_id);
-        output_ad.insert(adid);
-    }
-    candidates_ad.swap(output_ad);
-    return rc;
-}
-
-int WuManberPair::Split(RawPattAdSetMap &adp_inmap,  
-                        RawPattAdSetMap &adp_outmap_s,  
-                        RawPattAdSetMap &adp_outmap_t)
-{
-    int count=0;
-    for (auto it = adp_inmap.begin(); it != adp_inmap.end(); it++) {
-        Pattern p(it->first);
-        int len = p.pattern_str.length();
-        //WARN("rSPlit: in=%s len=%d pattern_str=%s", it->first.c_str(), len, p.pattern_str.c_str());
-        vector<string> strs;
-        boost::split(strs, p.pattern_str, boost::is_any_of("*"));
-        if(strs.size()>1) {
-            adp_outmap_s[it->first] = it->second; count++;
-            continue;
-        } 
-        if(len < mMinLength) {
-            adp_outmap_s[it->first] = it->second; count++;
-        } else {
-            adp_outmap_t[it->first] = it->second;
-        }
-    }
-    WARN("rSplit: in=%ld out=%ld:%ld", adp_inmap.size(), adp_outmap_s.size(), adp_outmap_t.size());
-    return count;
-}
-
 int WuManberPair::Split(const std::vector<std::string>& inlist, 
                         std::vector<std::string>& outlist_s, 
                         std::vector<std::string>& outlist_t)
@@ -985,53 +593,4 @@ bool WuManberPair::Init(const std::vector<std::string>& whitelist,
     rcs = wmbp.first.Init(whitelist_s, blacklist_s);
     rct = wmbp.second.Init(whitelist_t, blacklist_t);
     return (rcs||rct);
-}
-
-bool WuManberPair::Init(const std::vector<std::string>& whitelist, const std::vector<std::string>& blacklist,
-                        RawPattAdSetMap &adp_redir_map,  
-                        RawPattAdSetMap &se_redir_map,
-                        RawPattAdSetMap &tbad_redir_map)
-{
-    std::vector<std::string> whitelist_s, whitelist_t;
-    std::vector<std::string> blacklist_s, blacklist_t;
-    whitelist_s.reserve(whitelist.size());
-    whitelist_t.reserve(whitelist.size());
-    Split(whitelist, whitelist_s, whitelist_t);
-    blacklist_s.reserve(blacklist.size());
-    blacklist_t.reserve(blacklist.size());
-    Split(blacklist, blacklist_s, blacklist_t);
-
-    RawPattAdSetMap adp_redir_map_s, adp_redir_map_t;
-    RawPattAdSetMap se_redir_map_s, se_redir_map_t;
-    RawPattAdSetMap tbad_redir_map_s, tbad_redir_map_t;
-
-    Split(adp_redir_map, adp_redir_map_s, adp_redir_map_t);
-    Split(se_redir_map,  se_redir_map_s,  se_redir_map_t);
-    Split(tbad_redir_map, tbad_redir_map_s, tbad_redir_map_t);
-
-    bool rcs, rct;
-    rcs = wmbp.first.Init(whitelist_s, blacklist_s, adp_redir_map_s, se_redir_map_s, tbad_redir_map_s);
-    rct = wmbp.second.Init(whitelist_t, blacklist_t, adp_redir_map_t, se_redir_map_t, tbad_redir_map_t);
-    return (rcs||rct);
-}
-
-bool WuManberPair::Init(RawPattAdSetMap &adp_redir_map, const AdCard &adcard)
-{
-    RawPattAdSetMap adp_redir_map_s, adp_redir_map_t;
-    Split(adp_redir_map, adp_redir_map_s, adp_redir_map_t);
-    bool rcs, rct;
-    rcs = wmbp.first.Init(adp_redir_map_s, adcard);
-    rct = wmbp.second.Init(adp_redir_map_t, adcard);
-    return (rcs||rct);
-}
-
-int WuManberPair::search(const char* text, const int textLength, AdCardSet& res, int endPos)
-{
-    int n = wmbp.first.search(text, textLength, res, endPos);
-    int m = wmbp.second.search(text, textLength, res, endPos);
-    return n+m;
-}
-int WuManberPair::search(const std::string& str, AdCardSet& res, int endPos)
-{
-    return search(str.c_str(), str.length(), res, endPos);
 }

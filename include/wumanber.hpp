@@ -8,7 +8,10 @@
 #include <string>
 #include <set>
 #include <map>
-#include "ad_pattern.hpp"
+
+#include <boost/unordered_map.hpp>
+
+using namespace std;
 
 typedef std::map<std::string, unsigned> ResultPattPosMap;
 typedef std::pair<unsigned int, int> PrefixIdPairType;
@@ -72,32 +75,6 @@ class WuManber
 
         bool Init(const std::vector<std::string>& whitelist, const std::vector<std::string>& blacklist);
 
-        bool Init(const std::vector<std::string>& whitelist, const std::vector<std::string>& blacklist,
-                  RawPattAdSetMap &adp_redir_map,    
-                  RawPattAdSetMap &se_redir_map,
-                  RawPattAdSetMap &tbad_redir_map);
-
-        bool Init(RawPattAdSetMap &adp_redir_map, const AdCard &adcard);
-
-        /**
-         * @param res           Pattern-to-AdCardSet map that maps patterns
-         *                      (with match_type) to a set of AdCards.
-         * @return value 0: no pattern matches, n: n patterns match(n>0)
-         */
-        int search(const char* text, const int textLength, PatternAdSetMap& res, int endPos=0);
-
-        int search(const std::string& str, PatternAdSetMap&res, int endPos=0);
-
-        /**
-         * @param res           All the uniq AdCards that the incoming text
-         *                      matches.
-         * @param endPos: if set, check matching position must be less than endPos (match host)
-         * @return value 0: no pattern matches, n: n patterns match(n>0)
-         */
-        int search(const char* text, const int textLength, AdCardSet& res, int endPos=0);
-
-        int search(const std::string& str, AdCardSet& res, int endPos=0);
-
         /**
          * @brief search text
          *
@@ -126,18 +103,14 @@ class WuManber
         int32_t mTableSize;
         // size of block
         int32_t mBlock;
-        PatternAdSetMap pattadsetmap;
 
 private:
         AdPatternSet mAdPtnSet;
         PatternIDMap mPtnIdMap;
 
 private:
-    int dupGeneralPattern(RawPattAdSetMap &redir_map);
     int matchPatternSet(const std::vector<PatternID>& cid, unsigned int key, const PatternSet& ptns, int& match_index);
-    int buildAdPatternSet(const RawPattAdSetMap &redir_map, AdPatternSet& aps, const PatternIDMap& ptnid);
     int buildPatternIDPamp(const std::vector<std::string>& patterns, PatternIDMap& ptnid);
-    int filterAdByPatternset(std::vector<Pattern>& candidates_ptn, AdCardSet& candidates_ad, int& did_filter);
 
 };
 
@@ -145,23 +118,11 @@ struct WuManberPair
 {
     WuManberPair():mMinLength(7) {}
 
-    bool Init(const std::vector<std::string>& whitelist, const std::vector<std::string>& blacklist);    
-    bool Init(const std::vector<std::string>& whitelist, const std::vector<std::string>& blacklist,
-              RawPattAdSetMap &adp_redir_map,    
-              RawPattAdSetMap &se_redir_map,
-              RawPattAdSetMap &tbad_redir_map);    
-    bool Init(RawPattAdSetMap &adp_redir_map, const AdCard &adcard);
-
-    int search(const char* text, const int textLength, AdCardSet& res, int endPos=0);
-    int search(const std::string& str, AdCardSet& res, int endPos=0);
+    bool Init(const std::vector<std::string>& whitelist, const std::vector<std::string>& blacklist);
 
     int Split(const std::vector<std::string>& inlist, 
               std::vector<std::string>& outlist_s, 
               std::vector<std::string>& outlist_t);
-
-    int Split(RawPattAdSetMap &adp_inmap,  
-              RawPattAdSetMap &adp_outmap_s,  
-              RawPattAdSetMap &adp_outmap_t);
 
     int mMinLength;
     std::pair<WuManber, WuManber> wmbp;
