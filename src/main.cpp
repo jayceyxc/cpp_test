@@ -72,6 +72,7 @@ void http_client_test() {
     return;
 }
 
+#if 0
 static void insert_label(DecimalStringLabelSet &labels, string label_id,
                          int max_level, int len_per_level) {
     if (label_id.empty()) {
@@ -108,7 +109,37 @@ static void label_vec_to_map(std::map<std::string, DecimalStringLabelSet> &label
         
     }
 }
+#endif
 
+static void insert_label(DecimalStringLabelSet &labels, DecimalStringLabel label_id) {
+    if (label_id.getLabelId().empty()) {
+        return;
+    }
+    DecimalStringLabelSet::iterator iter = labels.find(label_id);
+    if ( iter == labels.end()) {
+        labels.insert(label_id);
+    }
+    else {
+       if (iter->getLabelLevel() > label_id.getLabelLevel()) {
+           labels.erase(iter);
+           labels.insert(label_id);
+       }
+    }
+}
+
+static void label_vec_to_set(DecimalStringLabelSet &label_set,
+                             std::set<std::string> &first_level_id_set,
+                             std::vector<string> label_vec,
+                             int max_level, int len_per_level) {
+    std::vector<string>::iterator iter;
+    for (iter = label_vec.begin(); iter != label_vec.end(); iter++) {
+        DecimalStringLabel label_id = DecimalStringLabel(*iter, max_level, len_per_level);
+        insert_label(label_set, label_id);
+        first_level_id_set.insert(label_id.getFirstLevelId());
+    }
+}
+
+#if 0
 void label_test() {
     map<std::string, DecimalStringLabelSet> user_tags;
     std::set<std::string> first_level_id_set;
@@ -142,6 +173,51 @@ void label_test() {
             }
         } else {
             cout << label_id.getLabelId() << " has no first match" << endl;
+        }
+    }
+    cout << matched_first_level_id_set.size() << endl;
+
+    if (first_level_id_set.size() == matched_first_level_id_set.size()) {
+        cout << "user tag matched" << endl;
+    } else {
+        cout << "not all user tag matched" << endl;
+    }
+
+    return;
+}
+#endif
+
+void label_test() {
+    DecimalStringLabelSet ad_tags;
+    std::set<std::string> first_level_id_set;
+    std::string label = "1001,2001,2002,3001,3002,3003,3004,3005";
+    std::vector<std::string> label_vec;
+    boost::split(label_vec, label, boost::is_any_of(":,;"),boost::token_compress_on);
+    label_vec_to_set(ad_tags, first_level_id_set, label_vec, YINNI_MAX_USER_TAG_LEVEL, YINNI_USER_TAG_LEN_PER_LEVEL);
+
+    for (DecimalStringLabelSetIter iter = ad_tags.begin(); iter != ad_tags.end(); iter++) {
+        cout << "label id: %s" << iter->getLabelId() << endl;
+    }
+    for (std::set<std::string>::iterator iter = first_level_id_set.begin(); iter != first_level_id_set.end(); iter++) {
+        cout << "first label id: %s" << *iter << endl;
+    }
+
+    cout << first_level_id_set.size() << endl;
+
+    std::string user_tag = "003072:001001:004008:002002";
+    std::vector<std::string> user_tag_vec;
+    std::set<std::string> matched_first_level_id_set;
+    boost::split(user_tag_vec, user_tag, boost::is_any_of(":,;"),boost::token_compress_on);
+    for (std::vector<std::string>::iterator iter = user_tag_vec.begin(); iter != user_tag_vec.end(); iter++) {
+        DecimalStringLabel label_id = DecimalStringLabel(*iter, YINNI_MAX_USER_TAG_LEVEL, YINNI_USER_TAG_LEN_PER_LEVEL);
+        DecimalStringLabelSetIter iter = ad_tags.find(label_id);
+        if (iter != ad_tags.end()) {
+            cout << "user tag: " << label_id.getLabelId() << " match one of ad tags" << endl;;
+            matched_first_level_id_set.insert(label_id.getFirstLevelId());
+        }
+        if (first_level_id_set.size() == matched_first_level_id_set.size()) {
+            cout << "label_test matches all first level" << endl;
+            break;
         }
     }
     cout << matched_first_level_id_set.size() << endl;

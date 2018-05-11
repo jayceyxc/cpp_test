@@ -20,6 +20,8 @@ public:
             level = CalcLevel(id);
 			compare_len = CalcCompareLen(id);
             CalcFirstLevelId(id);
+            cout << "level of " << id << " is " << level << endl;
+            cout << "compare length of " << id << " is " << compare_len << endl;
         }
     }
 
@@ -41,23 +43,25 @@ public:
 
     bool operator==(const DecimalStringLabel &right) const {
         int result = _label_id.compare(0, compare_len, right.getLabelId());
-        //cout << "call operator ==, " << this->getLabelId() << " compare " << right.getLabelId() << ", compare len: " << this->GetCompareLen() << ", result is " << result << endl;
+        cout << "call operator ==, " << this->getLabelId() << " compare " << right.getLabelId() << ", compare len: " << this->GetCompareLen() << ", result is " << result << endl;
         //if (_label_id.compare(0, this->GetCompareLen(), right.getLabelId()) == 0) {
         if (result == 0) {
+            cout << "return true" << endl;
             return true;
         }
+        cout << "return false" << endl;
         return false;
     }
 
     bool operator<(const DecimalStringLabel &right) const {
         int result = _label_id.compare(0, compare_len, right.getLabelId(), 0, compare_len);
-        //cout << "call operator <, " << this->getLabelId() << " compare " << right.getLabelId() << ", compare len: " << this->GetCompareLen() << ", result is " << result << endl;
+        cout << "call operator <, " << this->getLabelId() << " compare " << right.getLabelId() << ", compare len: " << this->GetCompareLen() << ", result is " << result << endl;
         //if (_label_id.compare(0, this->GetCompareLen(), right.getLabelId()) < 0) {
         if (result < 0) {
-            //cout << "return true" << endl;
+            cout << "return true" << endl;
             return true;
         }
-        //cout << "return false" << endl;
+        cout << "return false" << endl;
         return false;
     }
 private:
@@ -86,7 +90,7 @@ private:
 			return INVALID_LABEL_LEVEL;
 		}
 
-        return zero_number / _len_per_level;
+        return _max_level - zero_number / _len_per_level;
     }
 
 	size_t CalcCompareLen(string &id) const {
