@@ -231,6 +231,12 @@ void label_test() {
     return;
 }
 
+struct short_test {
+        unsigned short a:1;
+        unsigned short b:3;
+        unsigned short c:12;
+};
+
 int main(int argc, char* argv[]) {
     /*
     Person* person = new Person(18, "hello");
@@ -254,21 +260,46 @@ int main(int argc, char* argv[]) {
 //    resolver_test();
 
 //    http_client_test();
-    string url = "";
-    url = "http://www.iskdpg.com/wjfzj0815/?hr=$[url]&cox=$[adsl|sea]";
-    cout << url << endl;
-    url = "http://123.hr33.cn/main.js?info_sp=7013";
-    cout << url << endl;
+//    string url = "";
+//    url = "http://www.iskdpg.com/wjfzj0815/?hr=$[url]&cox=$[adsl|sea]";
+//    cout << url << endl;
+//    url = "http://123.hr33.cn/main.js?info_sp=7013";
+//    cout << url << endl;
 
-    size_t len = 3;
-    len = len - 18;
-    cout << len << endl;
-    string s("009020122000000000");
-    string s2("122");
-    cout << s.compare(0, len, s2, 0, len) << endl;
-    cout << s2.compare(0, len, s, 0, len) << endl;
+//    size_t len = 3;
+//    len = len - 18;
+//    cout << len << endl;
+//    string s("009020122000000000");
+//    string s2("122");
+//    cout << s.compare(0, len, s2, 0, len) << endl;
+//    cout << s2.compare(0, len, s, 0, len) << endl;
 
-    label_test();
+//    label_test();
+
+    short i = 102;
+    cout << i << endl;
+    cout << "htons(i) = " << htons(i) << endl;
+    cout << "htonl(i) = " << htonl(i) << endl;
+
+    struct short_test test;
+    test.a = 0;
+    test.b = 0;
+    test.c = htons(15);
+
+    cout << "test.c:" << test.c << endl;
+    cout << "test.c:" << ntohs(test.c) << endl;
+
+
+    test.c = htons(4095);
+
+    cout << "test.c:" << test.c << endl;
+    cout << "test.c:" << ntohs(test.c) << endl;
+
+
+    test.c = htons(95);
+
+    cout << "test.c:" << test.c << endl;
+    cout << "test.c:" << ntohs(test.c) << endl;
 
     return 0;
 }

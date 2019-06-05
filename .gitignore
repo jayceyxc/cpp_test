@@ -38,3 +38,6 @@ cpp_test.includes
 cpp_test.creator.user
 cpp_test.creator
 .vscode/
+.DS_Store
+.idea
+.idea/*

@@ -96,7 +96,7 @@ int store_msg_redis(std::string host, int port, int db, const char* ip, std::str
     snprintf(user_info.address, sizeof(user_info.address), "%s", "5020-7083");
     snprintf(user_info.imei, sizeof(user_info.imei), "%s", "imei123456");
     snprintf(user_info.imsi, sizeof(user_info.imsi), "%s", "imsi654321");
-#elifdef WIRELESS
+#elif WIRELESS
     user_info.flag = USER_ONLINE;
     user_info.lac = 0;
     user_info.ci = 0;
@@ -114,6 +114,7 @@ int store_msg_redis(std::string host, int port, int db, const char* ip, std::str
     user_info.ip = addr.s_addr;
     snprintf(user_info.name , sizeof(user_info.name) ,"%s" ,adsl.c_str()) ;
     snprintf(user_info.imsi, sizeof(user_info.imsi), "%s", "imsi654321");
+#endif
 
     struct timeval timeout = {1, 5};
     try {

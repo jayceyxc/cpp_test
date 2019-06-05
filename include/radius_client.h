@@ -70,7 +70,7 @@ typedef struct acn_user_info_s
     std::map<uint32_t, acn_simple_info_t*> *location_map_;
     uint32_t add_time;
 } acn_user_info_t;
-#elifdef WIRELESS
+#elif WIRELESS
 typedef struct acn_user_info_s
 {
     uint8_t  flag;

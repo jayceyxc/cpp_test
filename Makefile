@@ -4,6 +4,7 @@ RM = rm
 
 INCLUDES = -I./include -I./src -I/usr/local/include/boost -I/usr/include/hiredis/
 LIB_PATH = -L/usr/local/lib -L./lib
+DEFINES = -DYINNI
 #LDFLAGS = -lboost_system -lboost_filesystem -lboost_regex -lhiredis
 LDFLAGS = -Wl,-static \
 		  -Wl,-static -lboost_thread \
@@ -33,7 +34,7 @@ JIEBA_APP = jieba_example
 all: $(MAIN) $(RADIUS_CLIENT) ${FRISO_APP} ${JIEBA_APP}
 
 %.o: %.cpp
-	$(CC) $(CPPFLAGS) -c $< -o $@ $(INCLUDES)
+	$(CC) $(DEFINES) $(CPPFLAGS) -c $< -o $@ $(INCLUDES)
 
 $(MAIN): $(MOBJ) $(OBJS)
 	$(CC) -o $@ $^ $(LIB_PATH) $(LDFLAGS)
